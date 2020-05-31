@@ -121,15 +121,43 @@ class TierImageNet(Dataset):
         support_y = []
         query_y = []
 
+        support_imgs = []
+        query_imgs = []
+        # select n_way classes randomly
+        selected_classes = np.random.choice(self.total_cls, self.n_way)
+        # select k_shot + k_query for each class
+        for selected_class in selected_classes:
+            selected_imgs = np.random.choice(
+                self.dic_img_label[self.num2label[selected_class]], self.k_shot + self.k_query, False)
+            support_imgs += selected_imgs[:self.k_shot].tolist()
+            query_imgs += selected_imgs[self.k_shot:].tolist()
+
         with env.begin(write=False) as txn:
-            for i, img_id in enumerate(episode_set["support_set"]):
+            for i, img_id in enumerate(support_imgs):
                 res = pyarrow.deserialize(txn.get(u'{}'.format(img_id).encode('ascii')))
                 support_x[i] = self.transform(res[0])
                 support_y.append(res[1])
-            for i, img_id in enumerate(episode_set["query_set"]):
+
+            for i, img_id in enumerate(query_imgs):
                 res = pyarrow.deserialize(txn.get(u'{}'.format(img_id).encode('ascii')))
                 query_x[i] = self.transform(res[0])
                 query_y.append(res[1])
+
+        support_y = np.array(support_y)
+        query_y = np.array(query_y)
+
+        if self.shuffle:
+            index = np.random.permutation(len(support_y))
+            support_x = support_x[index]
+            if not self.fet_global:
+                support_y = np.array([i for i in range(self.n_way) for j in range(self.k_shot)])
+            support_y = support_y[index]
+
+            index = np.random.permutation(len(query_y))
+            query_x = query_x[index]
+            if not self.fet_global:
+                query_y = np.array([i for i in range(self.n_way) for j in range(self.k_query)])
+            query_y = query_y[index]
 
         return \
             support_x, torch.LongTensor(torch.Tensor(support_y).long()), \

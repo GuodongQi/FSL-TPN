@@ -24,7 +24,7 @@ def main():
     configs.k_shot = 1
     configs.k_query = 20
     configs.rn = 30
-    configs.num_workers = 8
+    configs.num_workers = 16
     print(repr(configs))
 
     pwd = os.getcwd()
@@ -38,8 +38,8 @@ def main():
 
     # init dataloader
     print("init data loader")
-    train_db = data_loader(configs, split="train")
-    val_db = data_loader(configs, split="val")
+    train_db = data_loader(configs, num_workers=configs.num_workers, split="train")
+    val_db = data_loader(configs, num_workers=2 * configs.num_workers, split="val")
 
     # init neural networks
     net = LabelPropagation(configs).to(device)

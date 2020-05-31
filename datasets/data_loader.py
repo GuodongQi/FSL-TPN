@@ -7,14 +7,14 @@ from datasets.miniImagenet import MiniImagenet
 from datasets.tierImagesnet import TierImageNet
 
 
-def data_loader(cfg, split='train'):
+def data_loader(cfg, num_workers=0, split='train'):
     if cfg.dataset == "miniImagenet":
         train_data = MiniImagenet(cfg.data_path, cfg.n_way, cfg.k_shot, cfg.k_query, cfg.x_dim, split)
     elif cfg.dataset == 'tierImagenet':
         train_data = TierImageNet(cfg.data_path, cfg.n_way, cfg.k_shot, cfg.k_query, cfg.x_dim, split)
     else:
         raise Exception("check your spelling of dataset")
-    train_db = DataLoader(train_data, shuffle=True, num_workers=cfg.num_workers, pin_memory=True, drop_last=True)
+    train_db = DataLoader(train_data, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
     return train_db
 
 
